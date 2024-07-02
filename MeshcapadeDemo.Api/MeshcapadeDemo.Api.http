@@ -1,0 +1,6 @@
+@MeshcapadeDemo.Api_HostAddress = http://localhost:5180
+
+GET {{MeshcapadeDemo.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
