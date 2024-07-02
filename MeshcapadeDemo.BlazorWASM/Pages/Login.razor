@@ -50,10 +50,16 @@
     {
         var request = new
         {
-            Username = email,
-            Password = password
+            Username = "ms_sp_ok@yopmail.com",
+            Password = "Admin@12345"
 
         };
+        //var request = new
+        //{
+        //    Username = email,
+        //    Password = password
+
+        //};
         var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
         var response = await HttpClient.PostAsync($"api/login", content);
         var loginResponse =await response.Content.ReadFromJsonAsync<LoginResponse>();
