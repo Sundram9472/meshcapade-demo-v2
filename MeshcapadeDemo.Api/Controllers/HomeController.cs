@@ -52,6 +52,44 @@ namespace MeshcapadeDemo.Api.Controllers
         }
 
 
+        [HttpPost("GetAvatar")]
+        public async Task<IActionResult> GetAvatar([FromBody] GetAvatarRequest request)
+        {
+            try
+            {
+                return Ok(await _meshcapadeService.GetAvatar(request.Token, request.AssetId));
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { error = e.Message });
+            }
+        }
+
+
+
+        [HttpPost("ExportAvatar")]
+        public async Task<IActionResult> ExportAvatar([FromBody] GetAvatarRequest request)
+        {
+            try
+            {
+                var exportedAvatar = await _meshcapadeService.ExportAvatar(request.Token, request.AssetId);
+                if (exportedAvatar == null)
+                    return NoContent();
+                return Ok(exportedAvatar);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { error = e.Message });
+            }
+        }
+
+
+
+
+
+
+
+
     }
 
     public class LoginRequestModel
@@ -66,5 +104,12 @@ namespace MeshcapadeDemo.Api.Controllers
         public string Token { get; set; }
         public string MediaType { get; set; }
         public IFormFile UploadedFile { get; set; }
+    }
+
+
+    public class GetAvatarRequest
+    {
+        public string Token { get; set; }
+        public string AssetId { get; set; }
     }
 }

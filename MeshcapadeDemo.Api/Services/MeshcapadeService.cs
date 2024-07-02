@@ -40,7 +40,7 @@ namespace MeshcapadeDemo.Api.Services
 
 
 
-        public async Task<bool> GenerateAvatar(string token, IFormFile uploadedFile, string media)
+        public async Task<string> GenerateAvatar(string token, IFormFile uploadedFile, string media)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -75,8 +75,37 @@ namespace MeshcapadeDemo.Api.Services
             //Start Fitting Process
             response = await _httpClient.PostAsync($"avatars/{assetId}/fit-to-{media}", null);
 
-            return response.StatusCode == System.Net.HttpStatusCode.OK;
+            return assetId;
 
+        }
+
+
+        public async Task<AvatarMeasurements> GetAvatar(string token, string assetId)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await _httpClient.GetAsync(requestUri: $"avatars/{assetId}");
+            response.EnsureSuccessStatusCode();
+            return  await response.Content.ReadFromJsonAsync<AvatarMeasurements>();
+        }
+
+
+        public async Task<AvatarExport> ExportAvatar(string token, string assetId)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var avatar = await GetAvatar(token, assetId);
+            if (avatar.data.attributes.state != "READY")
+                return null;
+
+
+                var requestBody = new
+                {
+                    format = "obj",
+                    pose = avatar.data.attributes.origin == "AFI" ? "scan":"a"
+                };
+
+            var response = await _httpClient.PostAsJsonAsync($"avatars/{assetId}/export", requestBody);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<AvatarExport>();
         }
 
     }
