@@ -3,6 +3,7 @@
 @using Newtonsoft.Json
 @inject HttpClient HttpClient
 @inject GlobalVariablesService GlobalVars
+@inject NavigationManager Navigation
 <PageTitle>SignIn</PageTitle>
 <Toasts class="p-3" Messages="messages" AutoHide="true" Delay="6000" Placement="ToastsPlacement.TopRight" />
 <div class="login-main">
@@ -39,11 +40,11 @@
 
     private ToastMessage CreateToastMessage(ToastType toastType, string message, string title)
     => new ToastMessage
-        {
-            Type = toastType,
-            Title = title,
-            Message = message,
-        };
+    {
+        Type = toastType,
+        Title = title,
+        Message = message,
+    };
 
     private async Task UserLogin()
     {
@@ -60,6 +61,7 @@
         {
             var token = loginResponse.access_token;
             GlobalVars.Token = token;
+            Navigation.NavigateTo("/");
         }
         else
         {

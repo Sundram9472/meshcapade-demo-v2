@@ -24,12 +24,12 @@ namespace MeshcapadeDemo.Api.Controllers
         }
 
 
-        [HttpGet("Login")]
-        public async Task<LoginResponse> Login(string username, string password)
+        [HttpPost("Login")]
+        public async Task<LoginResponse> Login([FromBody] LoginRequestModel request)
         {
             try
             {
-                var result = await _meshcapadeService.Login(username, password);
+                var result = await _meshcapadeService.Login(request.Username, request.Password);
                 return result;
             }
             catch (Exception e)
@@ -38,20 +38,12 @@ namespace MeshcapadeDemo.Api.Controllers
             }
         }
 
-        [HttpPost("CreateAvatarFromImage")]
-        public async Task<bool> CreateAvatarFromImage(string token, IFormFile uploadedFile)
+        [HttpPost("CreateAvatar")]
+        public async Task<bool> CreateAvatar(string token, string mediaType, IFormFile uploadedFile)
         {
             try
             {
-                var assetID = await _meshcapadeService.InitiateAvatarCreation(token, uploadedFile);
-
-                // Call GetPath method to retrieve path using assetID
-                var path = await _meshcapadeService.RequestImageUploads(token, assetID);
-
-                var isUploaded = await _meshcapadeService.UploadImageToS3(token, uploadedFile, path);
-                if (isUploaded)
-                    return (await _meshcapadeService.StartFittingProcess(assetID, token));
-                return false;
+                return await _meshcapadeService.GenerateAvatar(token, uploadedFile, mediaType);
             }
             catch (Exception e)
             {
@@ -59,6 +51,12 @@ namespace MeshcapadeDemo.Api.Controllers
             }
         }
 
-       
+
+    }
+
+    public class LoginRequestModel
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
     }
 }

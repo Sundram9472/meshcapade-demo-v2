@@ -109,17 +109,17 @@
     List<ToastMessage> messages = new List<ToastMessage>();
     private string extension;
     private bool uploadvideos3;
-    private string _endpoint;
+    private string _mediaType;
 
     private void ShowMessage(ToastType toastType, string message, string title) => messages.Add(CreateToastMessage(toastType, message, title));
 
     private ToastMessage CreateToastMessage(ToastType toastType, string message, string title)
     => new ToastMessage
-        {
-            Type = toastType,
-            Title = title,
-            Message = message,
-        };
+    {
+        Type = toastType,
+        Title = title,
+        Message = message,
+    };
 
 
 
@@ -145,40 +145,41 @@
                 case ".jpeg":
                 case ".png":
                 case ".gif":
-                    _endpoint = "api/createAvatarFromImage";
+                    _mediaType = "images";
                     break;
 
                 case ".mp4":
                 case ".avi":
                 case ".mov":
                 case ".mkv":
-                    _endpoint = "api/createAvatarFromVideo";
+                    _mediaType = "video";
                     break;
 
                 case ".obj":
-                    _endpoint = "api/createAvatarFromVideo";
+                    _mediaType = "scans";
                     break;
 
                 default:
-                    _endpoint = string.Empty;
+                    _mediaType = string.Empty;
                     break;
 
             }
 
-            if (string.IsNullOrEmpty(_endpoint))
+            if (string.IsNullOrEmpty(_mediaType))
             {
                 //Show Error popup that this file is not supported
                 return;
             }
-            
+
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(GlobalVars.Token), "token");
+            content.Add(new StringContent(_mediaType), "mediaType");
 
             var fileContent = new StreamContent(e.File.OpenReadStream()); // Adjust the maxAllowedSize as needed
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(e.File.ContentType);
             content.Add(fileContent, "uploadedFile", e.File.Name);
 
-            var response = await Http.PostAsync(_endpoint, content);
+            var response = await Http.PostAsync("api/CreateAvatar", content);
 
 
             if (response.IsSuccessStatusCode)
