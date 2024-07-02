@@ -39,15 +39,15 @@ namespace MeshcapadeDemo.Api.Controllers
         }
 
         [HttpPost("CreateAvatar")]
-        public async Task<bool> CreateAvatar(string token, string mediaType, IFormFile uploadedFile)
+        public async Task<IActionResult> CreateAvatar([FromForm] CreateAvatarRequest request)
         {
             try
             {
-                return await _meshcapadeService.GenerateAvatar(token, uploadedFile, mediaType);
+                return Ok(await _meshcapadeService.GenerateAvatar(request.Token, request.UploadedFile, request.MediaType));
             }
             catch (Exception e)
             {
-                return false;
+                return StatusCode(500, new { error = e.Message });
             }
         }
 
@@ -58,5 +58,13 @@ namespace MeshcapadeDemo.Api.Controllers
     {
         public string Username { get; set; }
         public string Password { get; set; }
+    }
+
+
+    public class CreateAvatarRequest
+    {
+        public string Token { get; set; }
+        public string MediaType { get; set; }
+        public IFormFile UploadedFile { get; set; }
     }
 }

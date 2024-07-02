@@ -42,6 +42,9 @@ namespace MeshcapadeDemo.Api.Services
 
         public async Task<bool> GenerateAvatar(string token, IFormFile uploadedFile, string media)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+
             //Initiate Avatar Creation
             var response = await _httpClient.PostAsync($"avatars/create/from-{media}", null);
             response.EnsureSuccessStatusCode();
@@ -49,21 +52,24 @@ namespace MeshcapadeDemo.Api.Services
             var responseData = await response.Content.ReadAsStringAsync();
             var jsonObject = JObject.Parse(responseData);
 
-
             string assetId = jsonObject["data"]["id"].ToString();
 
-
             //Request for Media Upload URL
-            response = await _httpClient.PostAsync($"/avatars/{assetId}/{media}", null);
+            response = await _httpClient.PostAsync(requestUri: $"avatars/{assetId}/{media}", null);
             response.EnsureSuccessStatusCode();
 
             string path = JObject.Parse(await response.Content.ReadAsStringAsync())["data"]["attributes"]["url"]["path"].ToString();
 
 
-
             //Upload Media to the URL
-            response = await _httpClient.PutAsync(path, new StreamContent(uploadedFile.OpenReadStream()));
-            response.EnsureSuccessStatusCode();
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Put, path);
+            using (var content = new StreamContent(uploadedFile.OpenReadStream()))
+            {
+                request.Content = content;
+                response = await client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+            }
 
 
             //Start Fitting Process
