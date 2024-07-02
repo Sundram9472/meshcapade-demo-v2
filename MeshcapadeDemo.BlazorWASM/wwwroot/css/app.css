@@ -21,7 +21,7 @@ a, .btn-link {
 }
 
 .content {
-    padding-top: 1.1rem;
+    padding-top: 0px;
 }
 
 .valid.modified:not([type=checkbox]) {
@@ -100,4 +100,136 @@ a, .btn-link {
 
 code {
     color: #c02d76;
+}
+.loader {
+    display: flex;
+    left: 440px;
+    width: 80px;
+    top: 80px;
+    height: 80px;
+    position: relative;
+    --c: no-repeat linear-gradient(#25b09b 0 0);
+    background: var(--c) center/100% 10px, var(--c) center/10px 100%;
+    justify-content: center;
+    align-content: center;
+}
+
+    .loader:before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--c) 0 0, var(--c) 100% 0, var(--c) 0 100%, var(--c) 100% 100%;
+        background-size: 31px 31px;
+        animation: l16 1.5s infinite cubic-bezier(0.3,1,0,1);
+    }
+
+@keyframes l16 {
+    33% {
+        inset: -10px;
+        transform: rotate(0deg)
+    }
+
+    66% {
+        inset: -10px;
+        transform: rotate(90deg)
+    }
+
+    100% {
+        inset: 0;
+        transform: rotate(90deg)
+    }
+}
+
+.sidebar.cus-sidebar {
+    background-image: linear-gradient(180deg, rgb(119 31 31) 0%, #2d252f 70%) !important;
+}
+
+.action-btn {
+    display: flex;
+    position: relative !important;
+    left: 0px !important;
+    top: 120px !important;
+    gap: 15px;
+}
+
+.card.cus-card {
+    width: 250px !important;
+    position: absolute !important;
+    left: 1114px !important;
+    top: 62px !important;
+    bottom: 0px !important;
+    overflow: scroll !important;
+    height: 555px !important;
+}
+
+    .card.cus-card .measurement-data {
+        border-bottom: 1px solid #534545;
+    }
+
+
+.cus-heading-mesh {
+    font-family: 'Trebuchet MS', sans-serif;
+}
+.navbar.navbar-dark .navbar-brand img {
+    height: 30px;
+    margin-right: 9px;
+}
+
+.navbar.navbar-dark .navbar-brand {
+    display: flex;
+    justify-content: space-between;
+}
+
+.login-main {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+    .login-main .inner-right img {
+        width: 726px;
+        height: 563px;
+    }
+
+    .login-main .inner-left-up  img{
+        height: 55px;
+    }
+    .login-main .inner-left-up {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+    }
+
+    .login-main p.cus-heading-mesh {
+        font-size: 21px;
+        margin-top: 7.5px;
+        margin-left: -5px;
+    }
+    .login-main .inner-left-down {
+        display: flex;
+        flex-direction: column;
+        margin-top: 100px;
+        gap: 25px;
+    }
+
+.email {
+    display: flex;
+    flex-direction: column;
+}
+
+.password {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-main .inner-left {
+    width: 350px;
+}
+
+.cus-input{
+    margin-top:20px;
+}
+
+.app .page .content {
+    padding-right: 0rem !important;
 }

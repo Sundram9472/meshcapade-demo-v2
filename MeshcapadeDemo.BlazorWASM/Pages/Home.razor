@@ -1,7 +1,262 @@
 ﻿@page "/"
-
 <PageTitle>Home</PageTitle>
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject GlobalVariablesService GlobalVars
+@using Microsoft.AspNetCore.Components.Forms
+@using Newtonsoft.Json
+@using System.Text
+@using System.Net.Http.Headers
 
-<h1>Hello, world!</h1>
+<Toasts class="p-3" Messages="messages" AutoHide="true" Delay="6000" Placement="ToastsPlacement.TopRight" />
+<InputFile accept=".jpg,.jpeg,.png,.gif,.mp4,.avi,.mov,.mkv,.obj" OnChange="@(async e => await HandleFileSelected(e))" class="cus-input" />
 
-Welcome to your new app.
+
+@if (isButtonShow)
+{
+    <div class="action-btn">
+        <button type="button" class="btn btn-primary btn-lg" @onclick="Download">
+            <span>
+                Download
+                <img src="/img/down-load.svg" />
+            </span>
+
+        </button>
+        <button type="button" class="btn btn-secondary btn-lg" @onclick="GetMeasurement">
+            <span>
+                Measurement
+                <img src="/img/rulers.svg" />
+            </span>
+        </button>
+    </div>
+}
+
+@if (isLoaderActive)
+{
+    <div class="loader"></div>
+}
+
+@if (showMeasurementData)
+{
+    <div class="card cus-card">
+        <h5 class="card-header">Measurement</h5>
+        <div class="card-body">
+            <div class="measurement-data">
+                <div class="shape">
+                    <h4>Shape <img src="/exclamation-circle.svg" /></h4>
+                    <p>@BodyShapevalue</p>
+                </div>
+
+                <div class="units">
+                    <h4>Units <img src="/eye.svg" /></h4>
+                    <p>@unitsvalue</p>
+                </div>
+
+                <div class="height">
+                    <h4>Height (cm) <img src="/eye.svg" /></h4>
+                    <p class="measurement-data-inner">@Height</p>
+                </div>
+
+                <div class="weight">
+                    <h4>Weight (kg) <img src="/eye.svg" /></h4>
+                    <p class="measurement-data-inner">@Weight</p>
+                </div>
+
+                <div class="chest">
+                    <h4>Chest (cm) <img src="/eye.svg" /></h4>
+                    <p class="measurement-data-inner">@chest</p>
+                </div>
+
+                <div class="waist">
+                    <h4>Waist (cm) <img src="/eye.svg" /></h4>
+                    <p class="measurement-data-inner">@waist</p>
+                </div>
+
+                <div class="hips">
+                    <h4>Hips (cm) <img src="/eye.svg" /></h4>
+                    <p class="measurement-data-inner">@hips</p>
+                </div>
+
+                <div class="inseam">
+                    <h4>Inseam (cm) <img src="/eye.svg" /></h4>
+                    <p class="measurement-data-inner">@inseam</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<canvas id="threeCanvas" style="width: 100%; height: 100%;"></canvas>
+
+@code {
+    private string? BodyShapevalue { get; set; }
+    private string? unitsvalue { get; set; }
+    public double inseam { get; set; }
+    public double hips { get; set; }
+    public double waist { get; set; }
+    public double chest { get; set; }
+    public double Weight { get; set; }
+    public double Height { get; set; }
+    private string? assetId;
+    private string? _s3Url;
+    private bool uploadimages3;
+    public AvatarMeasurements? responseAvatar;
+    public AvatarExport? responseAvatarExport;
+    private bool isLoaderActive = false;
+    private bool isButtonShow = false;
+    private bool showMeasurementData = false;
+    List<ToastMessage> messages = new List<ToastMessage>();
+    private string extension;
+    private bool uploadvideos3;
+    private string _endpoint;
+
+    private void ShowMessage(ToastType toastType, string message, string title) => messages.Add(CreateToastMessage(toastType, message, title));
+
+    private ToastMessage CreateToastMessage(ToastType toastType, string message, string title)
+    => new ToastMessage
+        {
+            Type = toastType,
+            Title = title,
+            Message = message,
+        };
+
+
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        const long maxAllowedSize = 20 * 1024 * 1024; // 20 MB
+        var file = e.File;
+        extension = Path.GetExtension(file.Name);
+        if (file.Size > maxAllowedSize)
+        {
+            ShowMessage(ToastType.Danger, "File too large to upload.!", "Status");
+            return;
+        }
+        else
+        {
+            isLoaderActive = true;
+            isButtonShow = false;
+            showMeasurementData = false;
+
+            switch (extension)
+            {
+                case ".jpg":
+                case ".jpeg":
+                case ".png":
+                case ".gif":
+                    _endpoint = "api/createAvatarFromImage";
+                    break;
+
+                case ".mp4":
+                case ".avi":
+                case ".mov":
+                case ".mkv":
+                    _endpoint = "api/createAvatarFromVideo";
+                    break;
+
+                case ".obj":
+                    _endpoint = "api/createAvatarFromVideo";
+                    break;
+
+                default:
+                    _endpoint = string.Empty;
+                    break;
+
+            }
+
+            if (string.IsNullOrEmpty(_endpoint))
+            {
+                //Show Error popup that this file is not supported
+                return;
+            }
+            
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(GlobalVars.Token), "token");
+
+            var fileContent = new StreamContent(e.File.OpenReadStream()); // Adjust the maxAllowedSize as needed
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(e.File.ContentType);
+            content.Add(fileContent, "uploadedFile", e.File.Name);
+
+            var response = await Http.PostAsync(_endpoint, content);
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                isLoaderActive = false;
+                isButtonShow = true;
+                ShowMessage(ToastType.Success, "Avatar Created succesfully !", "Avatar created");
+            }
+            else
+            {
+                ShowMessage(ToastType.Danger, "File upload to s3 bucket for avatar creation Faield !", "File Process For Avatar");
+            }
+        }
+
+    }
+
+    private double DoubleFormatter(double value)
+    {
+        var result = Math.Round(value, 2);
+        return result;
+    }
+
+    // public async Task<AvatarMeasurements> AvatarMeasurements(string avatarId, string token)
+    // {
+    //     responseAvatar = await CommonAvtarService.RetrieveAvatarMeasurements(avatarId, token);
+    //     var avatarStatus = responseAvatar.data.attributes.state;
+    //     return responseAvatar;
+    // }
+
+    private async Task GetMeasurement()
+    {
+        // isLoaderActive = true;
+        // showMeasurementData = false;
+        // responseAvatar = await AvatarMeasurements(assetId, _token);
+        // if (responseAvatar.data.attributes.state == "READY")
+        // {
+        //     ShowMessage(ToastType.Success, "Measurements !", "Avatar measrements");
+        //     Weight = DoubleFormatter(responseAvatar.data.attributes.metadata.bodyShape.mesh_measurements.Weight);
+        //     Height = DoubleFormatter(responseAvatar.data.attributes.metadata.bodyShape.mesh_measurements.Height);
+        //     BodyShapevalue = responseAvatar.data.attributes.metadata.bodyShape.gender;
+        //     unitsvalue = "METRIC";
+        //     isLoaderActive = false;
+        //     showMeasurementData = true;
+        // }
+        // else
+        // {
+        //     isLoaderActive = false;
+        //     ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait for sometime.!", "Status");
+        // }
+
+    }
+
+    private async Task Download()
+    {
+        // isLoaderActive = true;
+        // responseAvatar = await AvatarMeasurements(assetId, _token);
+        // if (responseAvatar.data.attributes.state == "READY")
+        // {
+        //     responseAvatarExport = await AvatarService.ExportAvatar(assetId, _token);
+        //     if (responseAvatarExport.data.attributes.state == "READY")
+        //     {
+        //         var s3BucketFileLink = responseAvatarExport.data.attributes.url.path.ToString();
+        //         await JSRuntime.InvokeVoidAsync("threeExample", "threeCanvas", s3BucketFileLink);
+        //         Navigation.NavigateTo(responseAvatarExport.data.attributes.url.path, true);
+        //     }
+        //     else
+        //     {
+        //         isLoaderActive = false;
+        //         ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait sometime for download.!", "Status");
+        //     }
+
+        //     isLoaderActive = false;
+        // }
+        // else
+        // {
+        //     isLoaderActive = false;
+        //     ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait sometime for download.!", "Status");
+        // }
+    }
+}
+
