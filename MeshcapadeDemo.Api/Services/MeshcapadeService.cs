@@ -1,7 +1,9 @@
 ﻿using MeshcapadeDemo.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Dynamic;
 using System.Net.Http.Headers;
+using System.Text;
 
 namespace MeshcapadeDemo.Api.Services
 {
@@ -71,9 +73,17 @@ namespace MeshcapadeDemo.Api.Services
                 response.EnsureSuccessStatusCode();
             }
 
+            dynamic payload = new ExpandoObject();
+            payload.avatarname = $"{media}_{assetId}";
+            
+            if (media == "images")
+                payload.imageMode = "AFI";
+
+            string jsonPayload = JsonConvert.SerializeObject(payload);
 
             //Start Fitting Process
-            response = await _httpClient.PostAsync($"avatars/{assetId}/fit-to-{media}", null);
+            response = await _httpClient.PostAsync($"avatars/{assetId}/fit-to-{media}", new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
+            response.EnsureSuccessStatusCode();
 
             return assetId;
 
