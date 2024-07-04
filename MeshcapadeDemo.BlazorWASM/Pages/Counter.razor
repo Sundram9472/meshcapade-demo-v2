@@ -1,18 +1,14 @@
-﻿@page "/counter"
+﻿@page "/Logout"
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+<PageTitle>LogOut</PageTitle>
 
-<PageTitle>Counter</PageTitle>
-
-<h1>Counter</h1>
-
-<p role="status">Current count: @currentCount</p>
-
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
-    private int currentCount = 0;
-
-    private void IncrementCount()
+    protected override async Task OnInitializedAsync()
     {
-        currentCount++;
+        await JSRuntime.InvokeVoidAsync("removeAllStorageKeys");
+        Navigation.NavigateTo("/",true);
     }
+   
 }

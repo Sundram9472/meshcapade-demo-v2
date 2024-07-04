@@ -1,4 +1,7 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject ILocalStorageService _localstorage
+@inject NavigationManager Navigation
+@inject IJSRuntime jsRuntime
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href=""><img src="/Img/images.jpeg" /> <h4 class="cus-heading-mesh">meshcapade</h4></a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -9,17 +12,33 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/Login" Match="NavLinkMatch.All">
-                <span></span> SignIn
-            </NavLink>
-        </div>
+        @if (@IsSucces == "true")
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/Home" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3 cus-top-mar">
+                <NavLink class="nav-link cus-img-nav" href="/Logout" Match="NavLinkMatch.All">
+                    <img src="img/login.svg" /> LogOut
+                </NavLink>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link cus-img-nav" href="/" Match="NavLinkMatch.All">
+                    <img src="img/logout.svg" /> Login
+                </NavLink>
+            </div>
+        }
+
+        
+
+       
     </nav>
 </div>
 
@@ -32,4 +51,14 @@
     {
         collapseNavMenu = !collapseNavMenu;
     }
+    public string? IsSucces;
+    protected override async Task OnInitializedAsync()
+    {
+        IsSucces = await _localstorage.GetItemAsStringAsync("IsLoginSuccess");
+        if(IsSucces == "true")
+        {
+            Navigation.NavigateTo("/Home");
+        }
+    }
 }
+

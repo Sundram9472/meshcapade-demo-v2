@@ -1,13 +1,13 @@
-﻿@page "/"
+﻿@page "/Home"
 <PageTitle>Home</PageTitle>
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
-@inject GlobalVariablesService GlobalVars
 @using Microsoft.AspNetCore.Components.Forms
 @using Newtonsoft.Json
 @using System.Text
 @using System.Net.Http.Headers
+@inject ILocalStorageService _localstorage
 
 <Toasts class="p-3" Messages="messages" AutoHide="true" Delay="6000" Placement="ToastsPlacement.TopRight" />
 <InputFile accept=".jpg,.jpeg,.png,.gif,.mp4,.avi,.mov,.mkv,.obj" OnChange="@(async e => await HandleFileSelected(e))" class="cus-input" />
@@ -44,42 +44,42 @@
         <div class="card-body">
             <div class="measurement-data">
                 <div class="shape">
-                    <h4>Shape <img src="/exclamation-circle.svg" /></h4>
+                    <h4>Shape <img src="/Img/exclamation-circle.svg" /></h4>
                     <p>@BodyShapevalue</p>
                 </div>
 
                 <div class="units">
-                    <h4>Units <img src="/eye.svg" /></h4>
+                    <h4>Units <img src="/Img/eye.svg" /></h4>
                     <p>@unitsvalue</p>
                 </div>
 
                 <div class="height">
-                    <h4>Height (cm) <img src="/eye.svg" /></h4>
+                    <h4>Height (cm) <img src="/Img/eye.svg" /></h4>
                     <p class="measurement-data-inner">@Height</p>
                 </div>
 
                 <div class="weight">
-                    <h4>Weight (kg) <img src="/eye.svg" /></h4>
+                    <h4>Weight (kg) <img src="/Img/eye.svg" /></h4>
                     <p class="measurement-data-inner">@Weight</p>
                 </div>
 
                 <div class="chest">
-                    <h4>Chest (cm) <img src="/eye.svg" /></h4>
+                    <h4>Chest (cm) <img src="/Img/eye.svg" /></h4>
                     <p class="measurement-data-inner">@chest</p>
                 </div>
 
                 <div class="waist">
-                    <h4>Waist (cm) <img src="/eye.svg" /></h4>
+                    <h4>Waist (cm) <img src="/Img/eye.svg"></h4>
                     <p class="measurement-data-inner">@waist</p>
                 </div>
 
                 <div class="hips">
-                    <h4>Hips (cm) <img src="/eye.svg" /></h4>
+                    <h4>Hips (cm) <img src="/Img/eye.svg" /></h4>
                     <p class="measurement-data-inner">@hips</p>
                 </div>
 
                 <div class="inseam">
-                    <h4>Inseam (cm) <img src="/eye.svg" /></h4>
+                    <h4>Inseam (cm) <img src="/Img/eye.svg" /></h4>
                     <p class="measurement-data-inner">@inseam</p>
                 </div>
             </div>
@@ -110,6 +110,7 @@
     private string extension;
     private bool uploadvideos3;
     private string _mediaType;
+    private string? token;
 
     private void ShowMessage(ToastType toastType, string message, string title) => messages.Add(CreateToastMessage(toastType, message, title));
 
@@ -121,7 +122,18 @@
         Message = message,
     };
 
-
+    protected override async Task OnInitializedAsync()
+    {
+        var isSuccess = await _localstorage.GetItemAsStringAsync("IsLoginSuccess");
+        token = await _localstorage.GetItemAsStringAsync("token");
+        if (isSuccess == "false")
+        {
+            ShowMessage(ToastType.Danger, " ", "UnAuthorize");
+            System.Threading.Thread.Sleep(10000);
+            Navigation.NavigateTo("/");
+        }
+       
+    }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -167,12 +179,12 @@
 
             if (string.IsNullOrEmpty(_mediaType))
             {
-                //Show Error popup that this file is not supported
+                ShowMessage(ToastType.Danger, "file is not supported.!", "Status");
                 return;
             }
 
             using var content = new MultipartFormDataContent();
-            content.Add(new StringContent(GlobalVars.Token), "token");
+            content.Add(new StringContent(token), "token");
             content.Add(new StringContent(_mediaType), "mediaType");
 
             var fileContent = new StreamContent(e.File.OpenReadStream()); // Adjust the maxAllowedSize as needed
@@ -184,6 +196,8 @@
 
             if (response.IsSuccessStatusCode)
             {
+                var AssetId = await response.Content.ReadAsStringAsync();
+                await _localstorage.SetItemAsync("AssetId", AssetId);
                 isLoaderActive = false;
                 isButtonShow = true;
                 ShowMessage(ToastType.Success, "Avatar Created succesfully !", "Avatar created");
@@ -205,62 +219,75 @@
         return result;
     }
 
-    // public async Task<AvatarMeasurements> AvatarMeasurements(string avatarId, string token)
-    // {
-    //     responseAvatar = await CommonAvtarService.RetrieveAvatarMeasurements(avatarId, token);
-    //     var avatarStatus = responseAvatar.data.attributes.state;
-    //     return responseAvatar;
-    // }
 
     private async Task GetMeasurement()
     {
-        // isLoaderActive = true;
-        // showMeasurementData = false;
-        // responseAvatar = await AvatarMeasurements(assetId, _token);
-        // if (responseAvatar.data.attributes.state == "READY")
-        // {
-        //     ShowMessage(ToastType.Success, "Measurements !", "Avatar measrements");
-        //     Weight = DoubleFormatter(responseAvatar.data.attributes.metadata.bodyShape.mesh_measurements.Weight);
-        //     Height = DoubleFormatter(responseAvatar.data.attributes.metadata.bodyShape.mesh_measurements.Height);
-        //     BodyShapevalue = responseAvatar.data.attributes.metadata.bodyShape.gender;
-        //     unitsvalue = "METRIC";
-        //     isLoaderActive = false;
-        //     showMeasurementData = true;
-        // }
-        // else
-        // {
-        //     isLoaderActive = false;
-        //     ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait for sometime.!", "Status");
-        // }
+        var request = new
+        {
+            token = await _localstorage.GetItemAsStringAsync("token"),
+            assetId = await _localstorage.GetItemAsStringAsync("AssetId")
 
+        };
+        var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+        isLoaderActive = true;
+        var response = await Http.PostAsync("api/GetAvatar", content);
+        if (response.IsSuccessStatusCode)
+        {
+            var apiResponse = await response.Content.ReadFromJsonAsync<AvatarMeasurements>();
+            if (apiResponse.data.attributes.state == "READY")
+            {
+                ShowMessage(ToastType.Success, "Avatar measrements !", "Status");
+                Weight = DoubleFormatter(apiResponse.data.attributes.metadata.bodyShape.mesh_measurements.Weight);
+                Height = DoubleFormatter(apiResponse.data.attributes.metadata.bodyShape.mesh_measurements.Height);
+                BodyShapevalue = apiResponse.data.attributes.metadata.bodyShape.gender;
+                unitsvalue = "METRIC";
+                isLoaderActive = false;
+                showMeasurementData = true;
+            }
+            else
+            {
+                isLoaderActive = false;
+                ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait.!", "Status");
+            }
+        }
+        else
+        {
+            isLoaderActive = false;
+            ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait.!", "Status");
+        }
     }
 
     private async Task Download()
     {
-        // isLoaderActive = true;
-        // responseAvatar = await AvatarMeasurements(assetId, _token);
-        // if (responseAvatar.data.attributes.state == "READY")
-        // {
-        //     responseAvatarExport = await AvatarService.ExportAvatar(assetId, _token);
-        //     if (responseAvatarExport.data.attributes.state == "READY")
-        //     {
-        //         var s3BucketFileLink = responseAvatarExport.data.attributes.url.path.ToString();
-        //         await JSRuntime.InvokeVoidAsync("threeExample", "threeCanvas", s3BucketFileLink);
-        //         Navigation.NavigateTo(responseAvatarExport.data.attributes.url.path, true);
-        //     }
-        //     else
-        //     {
-        //         isLoaderActive = false;
-        //         ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait sometime for download.!", "Status");
-        //     }
+        var request = new
+        {
+            token = await _localstorage.GetItemAsStringAsync("token"),
+            assetId = await _localstorage.GetItemAsStringAsync("AssetId")
 
-        //     isLoaderActive = false;
-        // }
-        // else
-        // {
-        //     isLoaderActive = false;
-        //     ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait sometime for download.!", "Status");
-        // }
+        };
+        var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+        isLoaderActive = true;
+        var response = await Http.PostAsync("api/ExportAvatar", content);
+        if(response.IsSuccessStatusCode)
+        {
+            var apiResponse = await response.Content.ReadFromJsonAsync<AvatarExport>();
+            if(apiResponse.data.attributes.state == "READY")
+            {
+                var s3BucketFileLink = apiResponse.data.attributes.url.path.ToString();
+                await JSRuntime.InvokeVoidAsync("threeExample", "threeCanvas", s3BucketFileLink);
+                Navigation.NavigateTo(apiResponse.data.attributes.url.path, true);
+                isLoaderActive = false;
+            }
+            else
+            {
+                isLoaderActive = false;
+                ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait sometime for download.!", "Status");
+            }
+        }
+        else
+        {
+            isLoaderActive = false;
+            ShowMessage(ToastType.Info, "Avatar is not in ready state. Please wait sometime for download.!", "Status");
+        }
     }
 }
-

@@ -110,7 +110,7 @@ namespace MeshcapadeDemo.Api.Services
                 var requestBody = new
                 {
                     format = "obj",
-                    pose = avatar.data.attributes.origin == "AFI" ? "scan":"a"
+                    pose = "a"
                 };
 
             var response = await _httpClient.PostAsJsonAsync($"avatars/{assetId}/export", requestBody);

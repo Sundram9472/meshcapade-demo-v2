@@ -161,3 +161,6 @@ function threeExample(canvasId, filepath) {
 
   requestAnimationFrame(render);
 }
+window.removeAllStorageKeys = () => {
+    localStorage.clear(); //remove all keys from localStorage 
+}

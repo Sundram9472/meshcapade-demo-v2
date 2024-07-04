@@ -233,3 +233,23 @@ code {
 .app .page .content {
     padding-right: 0rem !important;
 }
+
+.nav-link.cus-img-nav img{
+    width: 25px;
+    margin-right: 6px;
+}
+
+.nav-item.px-3.cus-top-mar {
+    margin-top: 425px;
+}
+
+.btn.cus-btn-login {
+    border: 1px solid #4c2328;
+    width: 115px;
+    color: white;
+    background-color: #553b42;
+}
+
+.login-btn {
+    margin-left: 80px;
+}

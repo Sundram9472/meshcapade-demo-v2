@@ -25,16 +25,21 @@ namespace MeshcapadeDemo.Api.Controllers
 
 
         [HttpPost("Login")]
-        public async Task<LoginResponse> Login([FromBody] LoginRequestModel request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestModel request)
         {
             try
             {
                 var result = await _meshcapadeService.Login(request.Username, request.Password);
-                return result;
+                return Ok(result);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return null;
+                var err = new ErrorResponse()
+                {
+                    Message = $"{ex.Message}",
+                    InnerException = ex.InnerException
+                };
+                return StatusCode(500, err);
             }
         }
 
@@ -47,7 +52,7 @@ namespace MeshcapadeDemo.Api.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, new { error = e.Message });
+                return StatusCode(500, new { error = e.Message, });
             }
         }
 

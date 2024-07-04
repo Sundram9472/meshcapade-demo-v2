@@ -1,9 +1,9 @@
-﻿@page "/Login"
+﻿@page "/"
 @using System.Text
 @using Newtonsoft.Json
 @inject HttpClient HttpClient
-@inject GlobalVariablesService GlobalVars
 @inject NavigationManager Navigation
+@inject ILocalStorageService _localstorage
 <PageTitle>SignIn</PageTitle>
 <Toasts class="p-3" Messages="messages" AutoHide="true" Delay="6000" Placement="ToastsPlacement.TopRight" />
 <div class="login-main">
@@ -24,7 +24,7 @@
                 <input type="password" @bind-value="password" required />
             </div>
             <div class="login-btn">
-                <Button @onclick="UserLogin" class="btn btn-info">Login</Button>
+                <Button @onclick="UserLogin" class="cus-btn-login">Login</Button>
             </div>
         </div>
     </div>
@@ -48,30 +48,32 @@
 
     private async Task UserLogin()
     {
+        // var request = new
+        // {
+        //     Username = "ms_sp_ok@yopmail.com",
+        //     Password = "Admin@12345"
+
+        // };
         var request = new
         {
-            Username = "ms_sp_ok@yopmail.com",
-            Password = "Admin@12345"
+           Username = email,
+           Password = password
 
         };
-        //var request = new
-        //{
-        //    Username = email,
-        //    Password = password
-
-        //};
         var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
         var response = await HttpClient.PostAsync($"api/login", content);
-        var loginResponse =await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var responseMessage = await response.Content.ReadAsStringAsync();
+        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
         if(response.IsSuccessStatusCode)
         {
-            var token = loginResponse.access_token;
-            GlobalVars.Token = token;
-            Navigation.NavigateTo("/");
+            await _localstorage.SetItemAsync("token", loginResponse.access_token);
+            await _localstorage.SetItemAsync("IsLoginSuccess", true);
+            Navigation.NavigateTo("/Home",true);
         }
         else
         {
             ShowMessage(ToastType.Danger, "Invalid username or password. !", "Error");
         }
+       
     }
 }
